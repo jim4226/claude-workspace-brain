@@ -6,6 +6,30 @@ All notable changes to this project will be documented here. Format loosely foll
 
 ## [Unreleased]
 
+### Added
+- **`/user-research` slash command** — captures atomic user-research
+  insights into a sidecar `WORKSPACE_RESEARCH.md` (kept out of the
+  brain's size budget). Provenance-checked: pseudonyms only, never real
+  names; refuses to fabricate participants, dates, or quotes. Two
+  confidence buckets (`[anecdote]` N=1, `[pattern]` N≥2 in same segment)
+  — qual N never reaches "strong." `[pattern]` insights gate-edit the
+  brain: thread annotations, OPEN QUESTIONS additions (capped per run),
+  one-time SYNAPSES pointers. `[anecdote]` insights stay in the sidecar
+  unless explicitly escalated. Conflicts with prior decisions route to
+  OPEN QUESTIONS (DECISIONS LOG stays append-only). Four input modes:
+  `describe`, `from-notes`, `synthesize`, and read-only `consult`.
+  Re-identification check (role+org+region+time tuple) gates writes;
+  verbatim quotes are routed to a gitignored `./research/quotes.local.md`.
+  Reports a behavior-vs-opinion ratio (Mom-Test discipline) and lint
+  delta on every run.
+- **`examples/user-research-walkthrough.md`** — fully worked 5-interview
+  checkout study showing input → sidecar entry → gated brain edits →
+  report.
+- **`brain_session_start.py`** now emits a one-line discoverability
+  breadcrumb when `WORKSPACE_RESEARCH.md` exists (so future-Claude knows
+  to consult it via `/user-research consult`). Honors `RESEARCH_FILE`
+  env var.
+
 ## [0.2.1] — 2026-05-23
 
 ### Added

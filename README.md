@@ -163,6 +163,7 @@ If your brain grows past 16 KB, the linter warns. Past 32 KB, injection is trunc
 | **`/brain-init`** | Interactive Q&A flow that scaffolds a personalised brain in 60 sec. |
 | **`/brain-grade`** | AI-graded quality review on 5 axes + concrete edit suggestions. Waits for approval. |
 | **`/brain-archive`** | Migrates completed threads + sessions >10 entries old to `WORKSPACE_BRAIN_ARCHIVE.md`. |
+| **`/user-research`** | Captures atomic user-research insights into a sidecar `WORKSPACE_RESEARCH.md`, with pseudonymous provenance, `[pattern]`-gated cross-references into the brain, and a `consult` mode for read-only queries. See [`examples/user-research-walkthrough.md`](examples/user-research-walkthrough.md). |
 
 ---
 
