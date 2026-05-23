@@ -10,3 +10,8 @@ MARKETING.md
 
 # Eval output
 eval/results_*.json
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example

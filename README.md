@@ -212,28 +212,33 @@ pip install anthropic
 python -m eval.abtest --runs 3
 ```
 
-Illustrative output (your numbers will differ — depends on your brain's quality):
+Real output against the bundled `eval/fixtures/sample_brain.md` (a synthetic web-app brain):
 
 ```
 abtest v1.0
-  brain:        WORKSPACE_BRAIN.md (2.6 KB)
+  brain:        sample_brain.md (2.6 KB)
   questions:    5 held-out, 3 run(s) each = 15 pairs
   answer model: claude-haiku-4-5-20251001
   judge model:  claude-sonnet-4-6
 
-  [1/15] current_focus       + delta=+12.0  (with=27, without=15)
-  [2/15] recent_decision     + delta=+18.0  (with=26, without=8)
+  [ 1/15] current_focus        + delta=+25.0  (with=30, without=5)
+  [ 2/15] recent_decision      + delta=+29.0  (with=30, without=1)
+  [ 3/15] blocked_work         + delta=+26.0  (with=27, without=1)
+  [ 4/15] open_question        + delta=+28.0  (with=29, without=1)
+  [ 5/15] non_obvious_dep      + delta=+26.0  (with=27, without=1)
   ...
 ============================================================
 Results over 15 pairs
 ============================================================
-  Mean delta (with - without):  +14.20 / 30 pts
-  95% CI:                       [+11.40, +17.00]
+  Mean delta (with - without):  +26.40 / 30 pts
+  95% CI:                       [+24.98, +27.82]
   Wins / ties / losses:         15 / 0 / 0
-  Mean score WITH brain:        26.4 / 30
-  Mean score WITHOUT brain:     12.2 / 30
+  Mean score WITH brain:        28.5 / 30
+  Mean score WITHOUT brain:     2.1 / 30
   Verdict:                      Brain helps (significant at 95% CI).
 ```
+
+Without the brain, Claude (Haiku 4.5) can do little more than say "I don't know" to brain-dependent questions like "what's currently blocked?" — that's the 2.1/30. With the brain in context, the same model becomes nearly the upper bound on what the judge can score (28.5/30). The delta is the value the brain provides on a fixed model.
 
 Cost: ~$0.05-0.15 per `--runs 3` invocation. Prompt caching reduces brain-content cost by ~90% across runs. Use `--dry-run` to see the prompts without API calls.
 
