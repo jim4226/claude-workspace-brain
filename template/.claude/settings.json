@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/brain_session_start.py",
+            "timeout": 10,
+            "statusMessage": "Loading workspace brain..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/brain_pre_compact.py",
+            "timeout": 10,
+            "statusMessage": "Flushing state to brain before compaction..."
+          }
+        ]
+      }
+    ]
+  }
+}
