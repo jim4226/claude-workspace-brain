@@ -3,9 +3,10 @@
 > **Stop re-explaining your project to Claude every session.**
 > Context compaction becomes a thing of the past.
 
+[![CI](https://img.shields.io/github/actions/workflow/status/jim4226/claude-workspace-brain/ci.yml?branch=main&label=CI)](https://github.com/jim4226/claude-workspace-brain/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/jim4226/claude-workspace-brain)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/jim4226/claude-workspace-brain)](https://github.com/jim4226/claude-workspace-brain/releases)
 [![Stars](https://img.shields.io/github/stars/jim4226/claude-workspace-brain?style=social)](https://github.com/jim4226/claude-workspace-brain/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/jim4226/claude-workspace-brain)](https://github.com/jim4226/claude-workspace-brain/commits/main)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-hook-7C5DCD)](https://claude.com/claude-code)
 
