@@ -25,9 +25,11 @@ except Exception:
     pass
 
 BRAIN_FILENAME = os.environ.get("BRAIN_FILE", "WORKSPACE_BRAIN.md")
+RESEARCH_FILENAME = os.environ.get("RESEARCH_FILE", "WORKSPACE_RESEARCH.md")
 MAX_KB = int(os.environ.get("BRAIN_MAX_KB", "32"))
 
 brain_path = os.path.join(os.getcwd(), BRAIN_FILENAME)
+research_path = os.path.join(os.getcwd(), RESEARCH_FILENAME)
 
 print("## ===== WORKSPACE BRAIN (auto-loaded at SessionStart) =====")
 print("This is the curated, compaction-proof memory of the workspace.")
@@ -55,6 +57,21 @@ else:
     print(f"(Brain file {BRAIN_FILENAME} not found at project root.")
     print(" Create it from the template to enable persistent memory:")
     print(" https://github.com/jim4226/claude-workspace-brain#quick-start)")
+
+# Discoverability breadcrumb: tell future-Claude the research sidecar exists.
+# The sidecar is NOT injected (it can be large); the brain's SYNAPSES section
+# tells you when to consult it. This one-liner ensures it's never invisible.
+if os.path.exists(research_path):
+    try:
+        research_kb = os.path.getsize(research_path) / 1024
+        print("")
+        print(
+            f"(Adjacent: {RESEARCH_FILENAME} exists ({research_kb:.1f} KB) — "
+            f"user-research log with pseudonymous insights. Read on demand "
+            f"or via /user-research consult.)"
+        )
+    except Exception:
+        pass
 
 print("")
 print("## ===== END BRAIN — resume work =====")
