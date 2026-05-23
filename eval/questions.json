@@ -1,0 +1,25 @@
+{
+  "comment": "Brain-dependent questions. Each is answerable from a well-maintained WORKSPACE_BRAIN.md but should be unanswerable (or hand-waved) without it. The harness sends each question to Claude with and without the brain in the system prompt, then judges both answers blind.",
+  "questions": [
+    {
+      "id": "current_focus",
+      "prompt": "What is the single highest-priority thing the team is working on this week, and what's the deadline (if any)?"
+    },
+    {
+      "id": "recent_decision",
+      "prompt": "What is the most recent technical or product decision made on this project, and why was it made?"
+    },
+    {
+      "id": "blocked_work",
+      "prompt": "What in-flight work is currently blocked? What is it blocked on?"
+    },
+    {
+      "id": "open_question",
+      "prompt": "Name one specific open question that the team still needs to resolve. Be concrete."
+    },
+    {
+      "id": "non_obvious_dep",
+      "prompt": "Name one non-obvious cross-reference or dependency in this codebase — something that would catch out a new contributor."
+    }
+  ]
+}

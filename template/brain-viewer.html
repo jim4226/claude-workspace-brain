@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Brain Viewer</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+
+    <script>
+        // Initial theme: ?theme=dark|light overrides localStorage; default is light.
+        (function() {
+            const url = new URL(window.location.href);
+            const themeParam = url.searchParams.get('theme');
+            if (themeParam === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                return;
+            }
+            if (themeParam === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                return;
+            }
+            if (localStorage.getItem('workspace-brain-theme') === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+            }
+        })();
+    </script>
+
+    <style>
+        :root {
+            --bg-deep: #030305;
+            --core-bone: #E8E6D9;
+            --neon-bio: #00FFD1;
+            --neon-scan: #FF2E93;
+            --neon-data: #4D4DFF;
+            --neon-warn: #FFB13D;
+            --font-display: 'Syncopate', sans-serif;
+            --font-body: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        [data-theme="light"] {
+            --bg-deep: #F5F3EE;
+            --core-bone: #1A1A1F;
+            --neon-bio: #00A67E;
+            --neon-scan: #D4236A;
+            --neon-data: #3D3DCC;
+            --neon-warn: #C97A0F;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-deep);
+            color: var(--core-bone);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            transition: background 0.4s, color 0.4s;
+        }
+
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 2rem;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+        }
+        [data-theme="light"] nav { background: rgba(0,0,0,0.02); border-bottom-color: rgba(0,0,0,0.06); }
+        .brand {
+            font-family: var(--font-display); font-weight: 700; letter-spacing: 0.15em;
+            font-size: 0.7rem; text-decoration: none; color: var(--neon-bio);
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .brand-pulse {
+            display: inline-block; width: 8px; height: 8px;
+            background: var(--neon-bio); border-radius: 50%;
+            box-shadow: 0 0 12px var(--neon-bio);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        .nav-right { display: flex; align-items: center; gap: 0.6rem; }
+        .nav-link {
+            font-family: var(--font-mono); font-size: 0.6rem; text-decoration: none;
+            color: rgba(255,255,255,0.45);
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 0.45rem 0.9rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            transition: all 0.2s;
+            cursor: pointer; background: none;
+        }
+        [data-theme="light"] .nav-link { color: rgba(0,0,0,0.5); border-color: rgba(0,0,0,0.1); }
+        .nav-link:hover { color: var(--neon-bio); border-color: var(--neon-bio); }
+        .nav-link.scan:hover { color: var(--neon-scan); border-color: var(--neon-scan); }
+        .nav-link.data:hover { color: var(--neon-data); border-color: var(--neon-data); }
+
+        main {
+            max-width: 1400px; margin: 0 auto;
+            padding: 5rem 2rem 3rem;
+            display: grid;
+            grid-template-columns: 1fr 480px;
+            gap: 2rem;
+        }
+        @media (max-width: 1100px) {
+            main { grid-template-columns: 1fr; }
+        }
+
+        .header { grid-column: 1 / -1; margin-bottom: 1rem; }
+        .title {
+            font-family: var(--font-display); font-size: 1.4rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+        .title b { color: var(--neon-bio); }
+        .subtitle {
+            font-family: var(--font-mono); font-size: 0.7rem;
+            color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+        }
+        [data-theme="light"] .subtitle { color: rgba(0,0,0,0.45); }
+        .header-meta {
+            display: flex; gap: 1.5rem; margin-top: 0.8rem;
+            font-family: var(--font-mono); font-size: 0.6rem;
+            color: rgba(255,255,255,0.3);
+            flex-wrap: wrap;
+        }
+        [data-theme="light"] .header-meta { color: rgba(0,0,0,0.45); }
+        .header-meta strong { color: var(--neon-bio); font-weight: 400; }
+
+        .section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1.2rem;
+        }
+        [data-theme="light"] .section { background: rgba(0,0,0,0.015); border-color: rgba(0,0,0,0.06); }
+        .section-title {
+            font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            margin-bottom: 0.9rem;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .section-icon { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; }
+        .section-title.scan { color: var(--neon-scan); }
+        .section-title.data { color: var(--neon-data); }
+        .section-title.bio  { color: var(--neon-bio); }
+        .section-title.warn { color: var(--neon-warn); }
+
+        .section-body {
+            font-family: var(--font-body); font-size: 0.78rem;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.65;
+        }
+        [data-theme="light"] .section-body { color: rgba(0,0,0,0.75); }
+        .section-body ul { list-style: none; padding-left: 0; }
+        .section-body li {
+            padding-left: 1.4rem; position: relative;
+            margin-bottom: 0.45rem;
+        }
+        .section-body li::before {
+            content: '▸'; position: absolute; left: 0.4rem;
+            color: var(--neon-bio); font-size: 0.7rem;
+            top: 0.1rem;
+        }
+        .section-body li.done::before { content: '✓'; color: var(--neon-bio); }
+        .section-body li.pending::before { content: '○'; color: var(--neon-warn); }
+        .section-body code, .section-body .mono {
+            font-family: var(--font-mono); font-size: 0.85em;
+            background: rgba(255,255,255,0.05);
+            padding: 0.08rem 0.35rem;
+            border-radius: 3px;
+            color: var(--neon-data);
+        }
+        [data-theme="light"] .section-body code, [data-theme="light"] .section-body .mono {
+            background: rgba(0,0,0,0.04); color: var(--neon-data);
+        }
+        .section-body strong { color: var(--core-bone); font-weight: 600; }
+        .section-body em { color: var(--neon-bio); font-style: normal; }
+        .section-body h3 {
+            font-family: var(--font-mono); font-size: 0.65rem;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.5);
+            margin-top: 0.8rem; margin-bottom: 0.4rem;
+        }
+        [data-theme="light"] .section-body h3 { color: rgba(0,0,0,0.55); }
+
+        .synapse-panel {
+            position: sticky; top: 5rem;
+            height: calc(100vh - 7rem);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 1.2rem;
+            display: flex; flex-direction: column;
+        }
+        [data-theme="light"] .synapse-panel { background: rgba(0,0,0,0.015); border-color: rgba(0,0,0,0.06); }
+        .synapse-panel-title {
+            font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--neon-data);
+            margin-bottom: 0.8rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .synapse-canvas-wrap {
+            flex: 1; position: relative;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 400px;
+        }
+        [data-theme="light"] .synapse-canvas-wrap { background: rgba(0,0,0,0.04); }
+        #synapse-canvas { display: block; width: 100%; height: 100%; }
+        .synapse-legend {
+            display: flex; gap: 0.7rem; flex-wrap: wrap;
+            margin-top: 0.7rem;
+            font-family: var(--font-mono); font-size: 0.55rem;
+            color: rgba(255,255,255,0.4);
+        }
+        [data-theme="light"] .synapse-legend { color: rgba(0,0,0,0.5); }
+        .synapse-legend .dot {
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; margin-right: 0.3rem;
+            vertical-align: middle;
+        }
+
+        .hook-banner {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(0,255,209,0.04), rgba(77,77,255,0.04));
+            border: 1px solid rgba(0,255,209,0.15);
+            border-radius: 10px;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 1rem;
+            font-family: var(--font-mono); font-size: 0.65rem;
+        }
+        [data-theme="light"] .hook-banner {
+            background: linear-gradient(135deg, rgba(0,166,126,0.05), rgba(61,61,204,0.05));
+            border-color: rgba(0,166,126,0.2);
+        }
+        .hook-banner-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--neon-bio);
+            box-shadow: 0 0 10px var(--neon-bio);
+            animation: pulse 2s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        .hook-banner-text {
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 0.04em; line-height: 1.5;
+        }
+        [data-theme="light"] .hook-banner-text { color: rgba(0,0,0,0.7); }
+        .hook-banner-text b { color: var(--neon-bio); }
+
+        .raw-toggle {
+            font-family: var(--font-mono); font-size: 0.55rem;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            background: none; border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.4);
+            padding: 0.3rem 0.6rem; border-radius: 4px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .raw-toggle:hover { color: var(--neon-data); border-color: var(--neon-data); }
+        [data-theme="light"] .raw-toggle { color: rgba(0,0,0,0.5); border-color: rgba(0,0,0,0.1); }
+
+        .raw-view {
+            grid-column: 1 / -1;
+            display: none;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 1.2rem;
+            font-family: var(--font-mono); font-size: 0.62rem;
+            color: rgba(255,255,255,0.65);
+            white-space: pre-wrap;
+            line-height: 1.55;
+            overflow-x: auto;
+        }
+        .raw-view.shown { display: block; }
+        [data-theme="light"] .raw-view {
+            background: rgba(0,0,0,0.04); color: rgba(0,0,0,0.75); border-color: rgba(0,0,0,0.06);
+        }
+
+        .empty {
+            font-family: var(--font-mono); font-size: 0.7rem;
+            color: rgba(255,255,255,0.3);
+            padding: 4rem 0; text-align: center;
+        }
+
+        .footer {
+            grid-column: 1 / -1;
+            font-family: var(--font-mono); font-size: 0.55rem;
+            color: rgba(255,255,255,0.2);
+            text-align: center;
+            margin-top: 1rem;
+            line-height: 1.6;
+        }
+        [data-theme="light"] .footer { color: rgba(0,0,0,0.25); }
+        .footer a { color: inherit; text-decoration: none; border-bottom: 1px dashed currentColor; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="#" class="brand">
+            <span class="brand-pulse"></span>
+            WORKSPACE BRAIN
+        </a>
+        <div class="nav-right">
+            <button class="nav-link" id="theme-toggle">Theme</button>
+            <button class="raw-toggle" id="raw-toggle">View Raw MD</button>
+        </div>
+    </nav>
+
+    <main>
+        <div class="hook-banner">
+            <span class="hook-banner-dot"></span>
+            <span class="hook-banner-text">
+                <b>SessionStart hook</b> injects this brain into Claude on every new session. <b>PreCompact hook</b> forces an update before any context compaction &mdash; so quality survives. Edit <code class="mono">WORKSPACE_BRAIN.md</code> at the project root to update.
+            </span>
+        </div>
+
+        <div class="header">
+            <h1 class="title">Workspace <b>Brain</b></h1>
+            <p class="subtitle">Persistent memory · survives compaction · auto-injected at session start</p>
+            <div class="header-meta">
+                <span>Last sync: <strong id="last-sync">&mdash;</strong></span>
+                <span>Active threads: <strong id="thread-count">&mdash;</strong></span>
+                <span>Synapses: <strong id="synapse-count">&mdash;</strong></span>
+                <span>File: <strong id="file-name">WORKSPACE_BRAIN.md</strong></span>
+            </div>
+        </div>
+
+        <div id="sections-container">
+            <div class="empty">Loading brain&hellip;</div>
+        </div>
+
+        <aside class="synapse-panel">
+            <div class="synapse-panel-title">
+                <span>Synapse Graph</span>
+                <span style="font-family:var(--font-mono);font-size:0.5rem;color:rgba(255,255,255,0.3);letter-spacing:0.08em;">DRAG NODES</span>
+            </div>
+            <div class="synapse-canvas-wrap">
+                <canvas id="synapse-canvas"></canvas>
+            </div>
+            <div class="synapse-legend">
+                <span><span class="dot" style="background:var(--neon-bio)"></span>Code</span>
+                <span><span class="dot" style="background:var(--neon-data)"></span>Data / config</span>
+                <span><span class="dot" style="background:var(--neon-scan)"></span>UI / route</span>
+                <span><span class="dot" style="background:var(--neon-warn)"></span>Thread / question</span>
+            </div>
+        </aside>
+
+        <div class="raw-view" id="raw-view"></div>
+
+        <div class="footer">
+            Workspace Brain Viewer &middot; part of <a href="https://github.com/jim4226/claude-workspace-brain">claude-workspace-brain</a><br>
+            Loaded from <code class="mono" id="footer-path">WORKSPACE_BRAIN.md</code>
+        </div>
+    </main>
+
+    <script>
+        // ============================================================
+        // MINIMAL MARKDOWN -> HTML (no external library)
+        // ============================================================
+        function mdInline(s) {
+            return s
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:var(--neon-bio);text-decoration:none;border-bottom:1px dashed rgba(0,255,209,0.4);">$1</a>')
+                .replace(/&lt;-&gt;|↔/g, '<span style="color:var(--neon-scan);font-weight:600;">&lt;-&gt;</span>')
+                .replace(/⏳|\(pending\)|\(in-progress\)/gi, m => `<span style="color:var(--neon-warn);">${m}</span>`)
+                .replace(/✅|\(done\)/gi, m => `<span style="color:var(--neon-bio);">${m}</span>`);
+        }
+
+        function renderSection(rawTitle, body, sectionEl) {
+            // Title may have emoji + text; we recognise common section emojis and
+            // also classify by text content for emoji-free brains.
+            const emojiMap = {
+                '🎯': { cls: 'bio', svg: '<circle cx="9" cy="9" r="7"/><circle cx="9" cy="9" r="3"/><circle cx="9" cy="9" r="1" fill="currentColor"/>' },
+                '🧵': { cls: 'warn', svg: '<path d="M5 3v12M5 15a3 3 0 1 0 4 3M9 18l6-6"/>' },
+                '🗺️': { cls: 'data', svg: '<path d="M3 6l5-2 5 2 5-2v12l-5 2-5-2-5 2zM8 4v12M13 6v12"/>' },
+                '🔗': { cls: 'scan', svg: '<path d="M7 11a4 4 0 0 1 4-4h2M11 7l-4 4M11 11a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4h2"/>' },
+                '🔢': { cls: 'bio', svg: '<path d="M3 9h12M3 13h12M7 5l-2 14M13 5l-2 14"/>' },
+                '📜': { cls: 'data', svg: '<path d="M4 4h10v14H4zM14 4l4 4v10h-4M7 8h4M7 12h4"/>' },
+                '❓': { cls: 'warn', svg: '<circle cx="9" cy="9" r="7"/><path d="M7 7c0-1 1-2 2-2s2 1 2 2-2 2-2 3M9 13.5v.5"/>' },
+                '📅': { cls: '', svg: '<rect x="2" y="3" width="14" height="13" rx="1"/><path d="M2 7h14M6 1v4M12 1v4"/>' },
+                '🛠️': { cls: '', svg: '<path d="M3 15l8-8 4 4-8 8H3zM10 5l3-3 3 3-3 3M10 5l3 3"/>' },
+            };
+            let emoji = '';
+            let titleText = rawTitle.replace(/^#+\s*/, '').trim();
+            for (const [e, def] of Object.entries(emojiMap)) {
+                if (titleText.startsWith(e)) {
+                    emoji = e;
+                    titleText = titleText.slice(e.length).trim();
+                    break;
+                }
+            }
+            // Text-based classification for emoji-free brains
+            let def = emojiMap[emoji] || { cls: '', svg: '' };
+            if (!emoji) {
+                const t = titleText.toLowerCase();
+                if (t.includes('focus') || t.includes('key number') || t.includes('metric')) def = { cls: 'bio', svg: '' };
+                else if (t.includes('thread') || t.includes('question') || t.includes('open')) def = { cls: 'warn', svg: '' };
+                else if (t.includes('decision') || t.includes('log') || t.includes('session')) def = { cls: 'data', svg: '' };
+                else if (t.includes('synapse') || t.includes('reference') || t.includes('link')) def = { cls: 'scan', svg: '' };
+            }
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'section-title ' + def.cls;
+            const iconSvg = def.svg
+                ? `<span class="section-icon"><svg viewBox="0 0 18 18" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${def.svg}</svg></span>`
+                : '';
+            titleEl.innerHTML = iconSvg + titleText;
+            sectionEl.appendChild(titleEl);
+
+            const bodyEl = document.createElement('div');
+            bodyEl.className = 'section-body';
+
+            // Strip HTML comments before rendering (template guidance shouldn't show)
+            body = body.replace(/<!--[\s\S]*?-->/g, '').trim();
+
+            const lines = body.split('\n');
+            let html = '';
+            let inList = false;
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (line.trim() === '') {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    continue;
+                }
+                if (/^\s*\*\(.*\)\*\s*$/.test(line)) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += `<div style="font-family:var(--font-mono);font-size:0.6rem;color:rgba(180,180,180,0.45);letter-spacing:0.04em;margin-bottom:0.5rem;">${mdInline(line.replace(/^\s*\*\((.*)\)\*\s*$/, '$1'))}</div>`;
+                    continue;
+                }
+                if (/^###\s/.test(line)) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += `<h3>${mdInline(line.replace(/^###\s*/, ''))}</h3>`;
+                    continue;
+                }
+                if (/^\s*[-*]\s/.test(line)) {
+                    if (!inList) { html += '<ul>'; inList = true; }
+                    let content = line.replace(/^\s*[-*]\s*/, '');
+                    let cls = '';
+                    if (/^\[\s\]/.test(content)) { cls = 'pending'; content = content.replace(/^\[\s\]\s*/, ''); }
+                    else if (/^\[x\]/i.test(content)) { cls = 'done'; content = content.replace(/^\[x\]\s*/i, ''); }
+                    else if (/^\(done\)/i.test(content) || /✅/.test(content)) { cls = 'done'; }
+                    else if (/^\(pending\)|^\(in-progress\)/i.test(content) || /⏳/.test(content)) { cls = 'pending'; }
+                    html += `<li class="${cls}">${mdInline(content)}</li>`;
+                    continue;
+                }
+                if (inList) { html += '</ul>'; inList = false; }
+                html += `<p style="margin-bottom:0.6rem;">${mdInline(line)}</p>`;
+            }
+            if (inList) html += '</ul>';
+            bodyEl.innerHTML = html;
+            sectionEl.appendChild(bodyEl);
+        }
+
+        function parseAndRender(md) {
+            const container = document.getElementById('sections-container');
+            container.innerHTML = '';
+
+            const syncMatch = md.match(/Last sync:\s*([^\n·]+)/);
+            document.getElementById('last-sync').textContent = syncMatch ? syncMatch[1].trim() : '—';
+
+            const parts = md.split(/\n## /).slice(1);
+            let threadCount = 0;
+            let synapseCount = 0;
+
+            for (const part of parts) {
+                const firstNewline = part.indexOf('\n');
+                const title = part.slice(0, firstNewline).trim();
+                const body = part.slice(firstNewline + 1).trim();
+
+                if (/active threads/i.test(title)) {
+                    threadCount = (body.match(/^[-*]\s/gm) || []).length;
+                }
+                if (/synapses/i.test(title)) {
+                    // Count both ↔ and <-> as synapse markers
+                    synapseCount = ((body.match(/↔/g) || []).length + (body.match(/<-?>/g) || []).length);
+                }
+
+                const sec = document.createElement('section');
+                sec.className = 'section';
+                renderSection(title, body, sec);
+                container.appendChild(sec);
+            }
+
+            document.getElementById('thread-count').textContent = threadCount;
+            document.getElementById('synapse-count').textContent = synapseCount;
+
+            const synapseSection = parts.find(p => /^(🔗 )?SYNAPSES/i.test(p));
+            if (synapseSection) buildGraph(synapseSection);
+
+            document.getElementById('raw-view').textContent = md;
+        }
+
+        // ============================================================
+        // SYNAPSE GRAPH (force-directed, canvas) — generic classifier
+        // ============================================================
+        function buildGraph(synapseText) {
+            const canvas = document.getElementById('synapse-canvas');
+            const ctx = canvas.getContext('2d');
+            const wrap = canvas.parentElement;
+
+            function resize() {
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = wrap.clientWidth * dpr;
+                canvas.height = wrap.clientHeight * dpr;
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.scale(dpr, dpr);
+            }
+            resize();
+            window.addEventListener('resize', () => { resize(); layout(); });
+
+            // Generic classifier — based on word shape, not domain
+            const classify = (label) => {
+                const l = label.toLowerCase();
+                // File paths, data, configs, schemas, APIs
+                if (/[\/\\]|\.(json|yml|yaml|toml|sql|csv|h5|parquet|env|conf)\b|schema|table|api|db|database|config|env\b/.test(l)) return 'data';
+                // UI, routes, pages, components
+                if (/\.html|\.tsx?|\.jsx?|\.vue|\.svelte|route|page|component|view|tab|modal|button|sidebar|header|footer/.test(l)) return 'scan';
+                // Threads, questions, todos, blocked work
+                if (/thread|todo|blocked|pending|question|open|wait/.test(l)) return 'warn';
+                return 'bio';
+            };
+
+            // Parse synapse lines, splitting on both ↔ and <->
+            const nodes = new Map();
+            const edges = [];
+            const lines = synapseText.split('\n').filter(l => /↔|<-?>/.test(l));
+            for (const line of lines) {
+                const cleaned = line.replace(/^\s*[-*]\s*/, '').replace(/\*\*/g, '');
+                const segments = cleaned.split(/↔|<-?>/).map(s =>
+                    s.replace(/\(.*?\)/g, '')   // drop parenthetical asides
+                     .replace(/—.*$/, '')        // drop "— explanation" tail
+                     .replace(/`([^`]*)`/g, '$1')
+                     .trim()
+                ).filter(Boolean);
+                for (let i = 0; i < segments.length; i++) {
+                    const label = segments[i].slice(0, 32);
+                    if (!nodes.has(label)) {
+                        nodes.set(label, {
+                            label, type: classify(label),
+                            x: Math.random() * wrap.clientWidth,
+                            y: Math.random() * wrap.clientHeight,
+                            vx: 0, vy: 0,
+                        });
+                    }
+                    if (i > 0) {
+                        edges.push([segments[i-1].slice(0,32), segments[i].slice(0,32)]);
+                    }
+                }
+            }
+
+            // Empty state — show a friendly message if no synapses parsed
+            if (nodes.size === 0) {
+                ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--core-bone').trim();
+                ctx.font = '11px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.globalAlpha = 0.4;
+                ctx.fillText('No synapses yet.', wrap.clientWidth / 2, wrap.clientHeight / 2 - 8);
+                ctx.fillText('Add lines like  A <-> B  in your SYNAPSES section.', wrap.clientWidth / 2, wrap.clientHeight / 2 + 10);
+                ctx.globalAlpha = 1;
+                return;
+            }
+
+            const colorMap = {
+                bio:  getComputedStyle(document.documentElement).getPropertyValue('--neon-bio').trim()  || '#00FFD1',
+                scan: getComputedStyle(document.documentElement).getPropertyValue('--neon-scan').trim() || '#FF2E93',
+                data: getComputedStyle(document.documentElement).getPropertyValue('--neon-data').trim() || '#4D4DFF',
+                warn: getComputedStyle(document.documentElement).getPropertyValue('--neon-warn').trim() || '#FFB13D',
+            };
+
+            function layout() {
+                const W = wrap.clientWidth, H = wrap.clientHeight;
+                for (let iter = 0; iter < 200; iter++) {
+                    const arr = [...nodes.values()];
+                    for (let i = 0; i < arr.length; i++) {
+                        for (let j = i + 1; j < arr.length; j++) {
+                            const dx = arr[j].x - arr[i].x;
+                            const dy = arr[j].y - arr[i].y;
+                            let d2 = dx*dx + dy*dy;
+                            if (d2 < 1) d2 = 1;
+                            const f = 1800 / d2;
+                            const fx = f * dx / Math.sqrt(d2);
+                            const fy = f * dy / Math.sqrt(d2);
+                            arr[i].vx -= fx; arr[i].vy -= fy;
+                            arr[j].vx += fx; arr[j].vy += fy;
+                        }
+                    }
+                    for (const [a, b] of edges) {
+                        const A = nodes.get(a), B = nodes.get(b);
+                        if (!A || !B) continue;
+                        const dx = B.x - A.x, dy = B.y - A.y;
+                        const d = Math.sqrt(dx*dx + dy*dy) || 1;
+                        const f = (d - 90) * 0.03;
+                        A.vx += f * dx / d; A.vy += f * dy / d;
+                        B.vx -= f * dx / d; B.vy -= f * dy / d;
+                    }
+                    for (const n of arr) {
+                        n.vx += (W/2 - n.x) * 0.0008;
+                        n.vy += (H/2 - n.y) * 0.0008;
+                        n.vx *= 0.82; n.vy *= 0.82;
+                        n.x += n.vx; n.y += n.vy;
+                        n.x = Math.max(40, Math.min(W - 40, n.x));
+                        n.y = Math.max(20, Math.min(H - 20, n.y));
+                    }
+                }
+            }
+            layout();
+
+            let drag = null;
+            canvas.addEventListener('mousedown', e => {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+                for (const n of nodes.values()) {
+                    if (Math.hypot(n.x - mx, n.y - my) < 28) { drag = n; break; }
+                }
+            });
+            canvas.addEventListener('mousemove', e => {
+                if (!drag) return;
+                const rect = canvas.getBoundingClientRect();
+                drag.x = e.clientX - rect.left;
+                drag.y = e.clientY - rect.top;
+                drag.vx = drag.vy = 0;
+            });
+            window.addEventListener('mouseup', () => { drag = null; });
+
+            function tick() {
+                const W = wrap.clientWidth, H = wrap.clientHeight;
+                ctx.clearRect(0, 0, W, H);
+                if (!drag) {
+                    const arr = [...nodes.values()];
+                    for (let i = 0; i < arr.length; i++) {
+                        for (let j = i + 1; j < arr.length; j++) {
+                            const dx = arr[j].x - arr[i].x;
+                            const dy = arr[j].y - arr[i].y;
+                            let d2 = dx*dx + dy*dy;
+                            if (d2 < 1) d2 = 1;
+                            const f = 600 / d2;
+                            const fx = f * dx / Math.sqrt(d2);
+                            const fy = f * dy / Math.sqrt(d2);
+                            arr[i].vx -= fx; arr[i].vy -= fy;
+                            arr[j].vx += fx; arr[j].vy += fy;
+                        }
+                    }
+                    for (const [a, b] of edges) {
+                        const A = nodes.get(a), B = nodes.get(b);
+                        if (!A || !B) continue;
+                        const dx = B.x - A.x, dy = B.y - A.y;
+                        const d = Math.sqrt(dx*dx + dy*dy) || 1;
+                        const f = (d - 90) * 0.01;
+                        A.vx += f * dx / d; A.vy += f * dy / d;
+                        B.vx -= f * dx / d; B.vy -= f * dy / d;
+                    }
+                    for (const n of arr) {
+                        n.vx += (W/2 - n.x) * 0.0003;
+                        n.vy += (H/2 - n.y) * 0.0003;
+                        n.vx *= 0.88; n.vy *= 0.88;
+                        n.x += n.vx; n.y += n.vy;
+                        n.x = Math.max(40, Math.min(W - 40, n.x));
+                        n.y = Math.max(20, Math.min(H - 20, n.y));
+                    }
+                }
+
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(180, 180, 200, 0.25)';
+                for (const [a, b] of edges) {
+                    const A = nodes.get(a), B = nodes.get(b);
+                    if (!A || !B) continue;
+                    ctx.beginPath();
+                    ctx.moveTo(A.x, A.y);
+                    ctx.lineTo(B.x, B.y);
+                    ctx.stroke();
+                }
+                for (const n of nodes.values()) {
+                    const col = colorMap[n.type] || colorMap.bio;
+                    const grad = ctx.createRadialGradient(n.x, n.y, 2, n.x, n.y, 24);
+                    grad.addColorStop(0, col + 'cc');
+                    grad.addColorStop(1, col + '00');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, 24, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = col;
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.font = '10px "JetBrains Mono", monospace';
+                    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+                    ctx.fillStyle = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(232,230,217,0.85)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(n.label, n.x, n.y + 18);
+                }
+                requestAnimationFrame(tick);
+            }
+            tick();
+        }
+
+        // ============================================================
+        // FETCH + INIT — supports ?path= query param
+        // ============================================================
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            const userPath = params.get('path');
+            const candidates = userPath
+                ? [userPath]
+                : ['WORKSPACE_BRAIN.md', '../WORKSPACE_BRAIN.md', '/WORKSPACE_BRAIN.md'];
+
+            let md = null;
+            let loadedFrom = null;
+            for (const url of candidates) {
+                try {
+                    const res = await fetch(url, { cache: 'no-cache' });
+                    if (res.ok) {
+                        md = await res.text();
+                        loadedFrom = url;
+                        if (md.startsWith('#') || md.includes('## ')) break;
+                    }
+                } catch (e) { /* keep trying */ }
+            }
+
+            if (!md) {
+                document.getElementById('sections-container').innerHTML = `
+                    <div class="section">
+                        <div class="section-title warn">Brain Not Loaded</div>
+                        <div class="section-body">
+                            <p>Could not fetch <code>WORKSPACE_BRAIN.md</code>. The viewer tried:</p>
+                            <ul>${candidates.map(c => `<li><code>${c}</code></li>`).join('')}</ul>
+                            <p>Serve the project root with a static server, e.g.:</p>
+                            <p><code>python -m http.server 8000</code></p>
+                            <p>Then open <code>http://localhost:8000/template/brain-viewer.html</code>, or pass an explicit path: <code>?path=WORKSPACE_BRAIN.md</code>.</p>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            // Show the file name in the header + footer
+            const fileName = (loadedFrom || '').split('/').pop() || 'WORKSPACE_BRAIN.md';
+            document.getElementById('file-name').textContent = fileName;
+            document.getElementById('footer-path').textContent = loadedFrom;
+            parseAndRender(md);
+        }
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const cur = document.documentElement.getAttribute('data-theme');
+            if (cur === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('workspace-brain-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('workspace-brain-theme', 'light');
+            }
+        });
+
+        document.getElementById('raw-toggle').addEventListener('click', () => {
+            const r = document.getElementById('raw-view');
+            r.classList.toggle('shown');
+            const btn = document.getElementById('raw-toggle');
+            btn.textContent = r.classList.contains('shown') ? 'Hide Raw' : 'View Raw MD';
+        });
+
+        init();
+    </script>
+</body>
+</html>
