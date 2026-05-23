@@ -211,6 +211,8 @@ pip install anthropic
 python -m eval.abtest --runs 3
 ```
 
+Illustrative output (your numbers will differ — depends on your brain's quality):
+
 ```
 abtest v1.0
   brain:        WORKSPACE_BRAIN.md (2.6 KB)

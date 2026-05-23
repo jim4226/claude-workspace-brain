@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke-test:
+    name: install + lint on ${{ matrix.os }} / py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.8", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install into a throwaway target dir
+        shell: bash
+        run: |
+          mkdir -p /tmp/target
+          python _install.py --target /tmp/target --yes
+
+      - name: Verify all 8 files landed
+        shell: bash
+        run: |
+          for f in \
+            .claude/settings.json \
+            .claude/hooks/brain_session_start.py \
+            .claude/hooks/brain_pre_compact.py \
+            .claude/hooks/brain_stop.py \
+            .claude/commands/brain.md \
+            .claude/commands/brain-grade.md \
+            .claude/scripts/brain_lint.py \
+            WORKSPACE_BRAIN.md; do
+            test -f "/tmp/target/$f" || { echo "missing: $f"; exit 1; }
+          done
+
+      - name: Run linter on the installed template
+        shell: bash
+        run: |
+          cd /tmp/target
+          python .claude/scripts/brain_lint.py
+
+      - name: Verify SessionStart hook produces non-empty stdout
+        shell: bash
+        run: |
+          cd /tmp/target
+          out=$(python .claude/hooks/brain_session_start.py)
+          echo "$out" | grep -q "WORKSPACE BRAIN" || { echo "hook output missing header"; exit 1; }
+
+      - name: Verify PreCompact hook produces directive
+        shell: bash
+        run: |
+          cd /tmp/target
+          out=$(echo '{}' | python .claude/hooks/brain_pre_compact.py)
+          echo "$out" | grep -q "PRE-COMPACTION DIRECTIVE" || { echo "hook output missing directive"; exit 1; }
+
+      - name: Re-run installer (should be idempotent)
+        shell: bash
+        run: |
+          python _install.py --target /tmp/target --yes

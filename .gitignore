@@ -4,3 +4,9 @@ __pycache__/
 .venv/
 .idea/
 .vscode/
+
+# Local-only drafts
+MARKETING.md
+
+# Eval output
+eval/results_*.json
