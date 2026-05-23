@@ -6,6 +6,22 @@ All notable changes to this project will be documented here. Format loosely foll
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-05-23
+
+### Added
+- **`brain.py` unified CLI** — subcommands `show`, `copy`, `lint`, `serve`, `eval`.
+  Enables non-Claude-Code workflows: copy your brain to clipboard (Windows
+  `clip` / macOS `pbcopy` / Linux `xclip`/`wl-copy`/`xsel`) and paste into
+  any AI chat.
+- **README section: "Use with claude.ai (no Claude Code required)"** explaining
+  two patterns: (A) upload `WORKSPACE_BRAIN.md` as claude.ai Project knowledge
+  for persistent context across chats, (B) `brain copy` + manual paste for
+  ad-hoc sessions. Also lists what's lost without hooks (no automatic flush)
+  vs what's kept (file structure, linter, viewer, eval).
+
+### Changed
+- **README hero subtitle** now notes the claude.ai workflow alongside Claude Code.
+
 ## [0.2.0] — 2026-05-23
 
 The "extraordinary first impression" pass.

@@ -16,7 +16,7 @@
   <em>The bundled HTML viewer (<code>template/brain-viewer.html</code>) rendering a live brain — sections, threads, decisions, and a force-directed synapse graph. Drop it into any project.</em>
 </p>
 
-**One markdown file. Two hooks. Zero dependencies.** A minimal persistent-memory layer for [Claude Code](https://claude.com/claude-code) that survives context compaction.
+**One markdown file. Two hooks. Zero dependencies.** A minimal persistent-memory layer for [Claude Code](https://claude.com/claude-code) that survives context compaction. Also works with **claude.ai** (via Projects or the `brain copy` CLI — [see below](#use-with-claudeai-no-claude-code-required)).
 
 ### What this does that other memory tools don't
 
@@ -241,6 +241,69 @@ Results over 15 pairs
 Without the brain, Claude (Haiku 4.5) can do little more than say "I don't know" to brain-dependent questions like "what's currently blocked?" — that's the 2.1/30. With the brain in context, the same model becomes nearly the upper bound on what the judge can score (28.5/30). The delta is the value the brain provides on a fixed model.
 
 Cost: ~$0.05-0.15 per `--runs 3` invocation. Prompt caching reduces brain-content cost by ~90% across runs. Use `--dry-run` to see the prompts without API calls.
+
+---
+
+## Use with claude.ai (no Claude Code required)
+
+The hooks only fire inside Claude Code, but **the brain itself is just a markdown
+file** — usable with any AI chat. Two patterns work today:
+
+### Pattern A: claude.ai Projects (recommended for long-running work)
+
+[claude.ai Projects](https://claude.ai/projects) let you attach files as
+**Project knowledge** that's available to every chat in the project.
+
+1. In claude.ai, create a Project for your codebase.
+2. Click **Add content** → upload `WORKSPACE_BRAIN.md`.
+3. Every chat in that project now sees your brain in its context — same effect
+   as the SessionStart hook, but the trigger is "you start a chat in the Project,"
+   not "your session begins."
+4. When your brain changes meaningfully, re-upload to update Project knowledge.
+
+This is the closest you can get to the Claude Code experience on claude.ai.
+
+### Pattern B: Manual paste with the `brain` CLI
+
+For ad-hoc sessions or AI tools without project knowledge:
+
+```bash
+# Clone the repo once, then from any project root:
+python /path/to/claude-workspace-brain/brain.py copy
+# (Copies WORKSPACE_BRAIN.md in cwd to clipboard.)
+```
+
+Then paste into the chat as your first message — wrap it in a code fence or
+preface with "Here is the current state of my project — treat as ground truth:"
+so the AI knows what to do with it.
+
+The `brain` CLI also has:
+
+| Subcommand | What it does |
+|------------|-------------|
+| `brain copy` | Copy brain to clipboard (Windows `clip` / macOS `pbcopy` / Linux `xclip`+`wl-copy`+`xsel`) |
+| `brain show` | Print brain to stdout — pipe into other tools |
+| `brain lint` | Run the 6-axis quality scorer |
+| `brain serve` | Launch the HTML viewer in your browser (`python -m http.server` + open URL) |
+| `brain eval` | A/B harness against any model that speaks the Anthropic API |
+
+All subcommands accept `--brain PATH` to point at a brain outside the cwd.
+
+### What you lose without Claude Code
+
+- **No automatic flush before compaction.** claude.ai compacts long conversations
+  too, but exposes no hook — so the brain doesn't auto-update at the boundary.
+  You'll need to manually edit `WORKSPACE_BRAIN.md` between sessions, or ask
+  the chat to summarise what to add and you paste it in.
+- **No slash commands** (`/brain-init`, `/brain-grade`, `/brain-archive`).
+  The patterns are documented in `template/.claude/commands/*.md` if you want
+  to copy-paste the prompts manually.
+
+What you keep:
+- The brain file structure (sections, rules, archive pattern)
+- The linter (catches stale entries, oversize files, missing rationale)
+- The HTML viewer with synapse graph
+- The eval harness (proves the brain helps on YOUR project, against YOUR model)
 
 ---
 
