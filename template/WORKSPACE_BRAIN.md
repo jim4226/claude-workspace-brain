@@ -114,5 +114,5 @@ the answer to DECISIONS LOG and delete the question.
 ---
 
 > **For Claude**: Update this file before context compaction (the PreCompact hook
-> will remind you). Use the Edit tool — never rewrite the whole file.
+> pauses compaction once to prompt you). Use the Edit tool — never rewrite the whole file.
 > Run `/brain-grade` periodically to check quality and surface stale entries.

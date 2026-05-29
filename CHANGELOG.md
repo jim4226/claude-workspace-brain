@@ -6,6 +6,30 @@ All notable changes to this project will be documented here. Format loosely foll
 
 ## [Unreleased]
 
+### Fixed
+- **Hooks now actually reach the model.** Claude Code only injects hook *stdout*
+  into context for `SessionStart` / `UserPromptSubmit`; `PreCompact` and `Stop`
+  stdout go to the debug log only. The old hooks printed flush directives Claude
+  never saw. They now use the supported decision channel
+  (`{"decision": "block", "reason": ...}`):
+  - **`PreCompact`** blocks an *auto* compaction once and instructs Claude to
+    flush state into the brain, then lets compaction proceed. Guarded: manual
+    `/compact` is never blocked, a short-TTL marker (kept in the OS temp dir,
+    never the repo) makes the block one-shot, and any error fails open. Tunable
+    via `BRAIN_PRECOMPACT_TTL_MIN` (default 10 min).
+  - **`Stop`** (opt-in) blocks one stop to flush a stale brain, guarded by
+    `stop_hook_active` so it can't loop.
+- **`SessionStart` reconciles after compaction.** On the `compact` source it now
+  re-injects the brain *and* asks Claude to record any in-flight state the
+  summary dropped.
+- **Installer ships `/brain-init` and `/brain-archive`.** They were documented
+  but never copied (`_install.py` installed only `brain.md` + `brain-grade.md`).
+  The template is now 10 files (was 8); CI verifies all 10 and the new hook
+  behavior.
+- **`eval/README.md`** now points at the shipped `eval/abtest.py` A/B harness
+  instead of describing it as a "TODO".
+- **CHANGELOG compare links** corrected through v0.2.1.
+
 ## [0.2.1] — 2026-05-23
 
 ### Added
@@ -76,6 +100,7 @@ Initial public release.
 - Generic `WORKSPACE_BRAIN.md` template + research / web-app examples.
 - CI smoke test workflow targeting Linux / macOS / Windows × Python 3.8 / 3.11.
 
-[Unreleased]: https://github.com/jim4226/claude-workspace-brain/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/jim4226/claude-workspace-brain/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/jim4226/claude-workspace-brain/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/jim4226/claude-workspace-brain/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jim4226/claude-workspace-brain/releases/tag/v0.1.0

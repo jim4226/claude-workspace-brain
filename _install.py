@@ -36,6 +36,8 @@ FILES = [
     (".claude/hooks/brain_pre_compact.py", ".claude/hooks/brain_pre_compact.py"),
     (".claude/hooks/brain_stop.py", ".claude/hooks/brain_stop.py"),
     (".claude/commands/brain.md", ".claude/commands/brain.md"),
+    (".claude/commands/brain-init.md", ".claude/commands/brain-init.md"),
+    (".claude/commands/brain-archive.md", ".claude/commands/brain-archive.md"),
     (".claude/commands/brain-grade.md", ".claude/commands/brain-grade.md"),
     (".claude/scripts/brain_lint.py", ".claude/scripts/brain_lint.py"),
     ("WORKSPACE_BRAIN.md", "WORKSPACE_BRAIN.md"),

@@ -38,10 +38,10 @@ sequenceDiagram
 
     You->>Session1: "Let's work on X"
     Session1->>Session1: makes decisions, juggles threads<br/>(context fills)
-    Note over Session1: ~150k tokens — compaction imminent
-    Session1->>Brain: PreCompact hook fires<br/>"flush state to brain"
-    Session1->>Brain: Edit: decisions, threads, key numbers
-    Note over Session1: context compaction (lossy)
+    Note over Session1: ~150k tokens — auto-compaction imminent
+    Session1->>Session1: PreCompact blocks the compaction once
+    Session1->>Brain: Edit: flush decisions, threads, key numbers
+    Note over Session1: compaction proceeds (lossy)
     Session1->>You: "session over"
 
     You->>Session2: opens new session
@@ -53,10 +53,12 @@ Two hooks:
 
 | Hook | Fires when | What it does |
 |------|-----------|--------------|
-| **`SessionStart`** | Every new, resumed, or post-compaction session | Reads `WORKSPACE_BRAIN.md` and injects it as Claude's first context. |
-| **`PreCompact`** | Just before Claude Code compresses the conversation | Emits a directive telling Claude: "update the brain now, before working state collapses." |
+| **`SessionStart`** | Every new, resumed, or post-compaction session | Injects `WORKSPACE_BRAIN.md` as Claude's first context. After a compaction it also asks Claude to reconcile any state the summary dropped. |
+| **`PreCompact`** | Just before Claude Code **auto**-compresses the conversation | Pauses the compaction *once* and tells Claude to flush working state into the brain first; then compaction proceeds. Manual `/compact` is never blocked. |
 
 The brain file is hand-curated (with Claude's help). The hooks make sure it gets *read* at the start and *updated* before loss.
+
+> **Why block instead of just printing a reminder?** Claude only ingests hook *stdout* for `SessionStart` and `UserPromptSubmit` — a `PreCompact` hook's stdout goes to the debug log, never to the model. So the only way to reach Claude before compaction is to pause it once with a `block` decision whose reason *is* the flush instruction. The block is one-shot (a short-TTL marker lets the next compaction through) and fails open on any error, so it can never wedge a session.
 
 ---
 
@@ -74,7 +76,7 @@ curl -sSL https://raw.githubusercontent.com/jim4226/claude-workspace-brain/main/
 irm https://raw.githubusercontent.com/jim4226/claude-workspace-brain/main/install.ps1 | iex
 ```
 
-Both bootstrap by cloning the repo into a cache directory and copying the template (8 files, ~30 KB) into your current project. Idempotent: re-running merges with your existing `.claude/settings.json` rather than clobbering it.
+Both bootstrap by cloning the repo into a cache directory and copying the template (10 files, ~32 KB) into your current project. Idempotent: re-running merges with your existing `.claude/settings.json` rather than clobbering it.
 
 ### Initialize (60 sec)
 
@@ -339,6 +341,17 @@ If you rename a required section, the linter will mark it as missing — edit `R
 ```bash
 # Cap injection at 8 KB (smaller for token-conscious models)
 BRAIN_MAX_KB=8 claude
+```
+
+### Tuning the pre-compaction flush
+
+The `PreCompact` hook blocks an auto-compaction once to force a flush, then a
+short-lived marker lets the next compaction through so it never loops. Widen or
+narrow that window (default 10 minutes):
+
+```bash
+# Only force a fresh flush if the last one was >20 min ago
+BRAIN_PRECOMPACT_TTL_MIN=20 claude
 ```
 
 ### Tuning the optional Stop hook
