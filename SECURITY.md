@@ -37,7 +37,9 @@ That's by design (it's how Claude Code hooks work). In-scope issues:
 
 ## Known risk: hook output is trusted by Claude
 
-The `SessionStart` and `PreCompact` hooks emit text that Claude treats as
-system context. If your brain contains adversarial instructions, Claude
-will read them. Treat the brain like any other file in your repo —
-review changes before committing.
+The hooks feed text to Claude that it treats as trusted: `SessionStart` injects
+the brain as context, and `PreCompact` / `Stop` pass a flush instruction through
+the `block` decision's `reason`. All of it ultimately carries your brain's
+content or directives derived from it. If your brain contains adversarial
+instructions, Claude will read them. Treat the brain like any other file in your
+repo — review changes before committing.

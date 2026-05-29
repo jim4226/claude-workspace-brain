@@ -9,9 +9,10 @@ template" to "useful brain" in under 60 seconds.
 
 Read `WORKSPACE_BRAIN.md` at the project root.
 
-- If it doesn't exist, copy the template at `.claude/scripts/../WORKSPACE_BRAIN.md`
-  (or fetch from https://raw.githubusercontent.com/jim4226/claude-workspace-brain/main/template/WORKSPACE_BRAIN.md
-  if not present) to the project root.
+- If it doesn't exist (the installer normally places it at the project root
+  already), fetch the template from
+  https://raw.githubusercontent.com/jim4226/claude-workspace-brain/main/template/WORKSPACE_BRAIN.md
+  and write it to `WORKSPACE_BRAIN.md` at the project root.
 - If it exists AND has already been customised (any section has non-template
   content), **stop** and report back: "Brain already initialised. Use `/brain`
   to edit a section, or `/brain-grade` to audit quality." Do not proceed.

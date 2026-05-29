@@ -27,7 +27,7 @@ jobs:
           mkdir -p /tmp/target
           python _install.py --target /tmp/target --yes
 
-      - name: Verify all 8 files landed
+      - name: Verify all 10 files landed
         shell: bash
         run: |
           for f in \
@@ -36,6 +36,8 @@ jobs:
             .claude/hooks/brain_pre_compact.py \
             .claude/hooks/brain_stop.py \
             .claude/commands/brain.md \
+            .claude/commands/brain-init.md \
+            .claude/commands/brain-archive.md \
             .claude/commands/brain-grade.md \
             .claude/scripts/brain_lint.py \
             WORKSPACE_BRAIN.md; do
@@ -48,19 +50,25 @@ jobs:
           cd /tmp/target
           python .claude/scripts/brain_lint.py
 
-      - name: Verify SessionStart hook produces non-empty stdout
+      - name: Verify SessionStart injects the brain (startup + compact framing)
         shell: bash
         run: |
           cd /tmp/target
-          out=$(python .claude/hooks/brain_session_start.py)
-          echo "$out" | grep -q "WORKSPACE BRAIN" || { echo "hook output missing header"; exit 1; }
+          out=$(echo '{"source":"startup"}' | python .claude/hooks/brain_session_start.py)
+          echo "$out" | grep -q "WORKSPACE BRAIN" || { echo "startup output missing header"; exit 1; }
+          out=$(echo '{"source":"compact"}' | python .claude/hooks/brain_session_start.py)
+          echo "$out" | grep -q "Reconcile against it" || { echo "compact output missing reconcile directive"; exit 1; }
 
-      - name: Verify PreCompact hook produces directive
+      - name: Verify PreCompact blocks auto-compaction but not manual
         shell: bash
         run: |
           cd /tmp/target
-          out=$(echo '{}' | python .claude/hooks/brain_pre_compact.py)
-          echo "$out" | grep -q "PRE-COMPACTION DIRECTIVE" || { echo "hook output missing directive"; exit 1; }
+          # auto compaction, no prior flush this window -> must block to force a flush
+          out=$(echo '{"trigger":"auto"}' | python .claude/hooks/brain_pre_compact.py)
+          echo "$out" | grep -q '"decision": "block"' || { echo "PreCompact should block on auto; got: $out"; exit 1; }
+          # manual /compact is user-initiated -> must never block
+          out=$(echo '{"trigger":"manual"}' | python .claude/hooks/brain_pre_compact.py)
+          if echo "$out" | grep -q '"decision"'; then echo "PreCompact must not block manual; got: $out"; exit 1; fi
 
       - name: Re-run installer (should be idempotent)
         shell: bash

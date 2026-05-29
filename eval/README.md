@@ -44,5 +44,26 @@ If you want to compare brain-on vs brain-off objectively, the recipe is:
 5. Start another fresh session, ask the same question.
 6. Score again. The delta is your brain's value.
 
-This is the manual version. An automated harness would need the Anthropic API
-plus a held-out task set; see issue [TODO] for the proposal.
+That's the manual version. For the automated equivalent, the repo ships
+**`eval/abtest.py`** (described next).
+
+## Automated A/B harness (`eval/abtest.py`)
+
+The harness runs the loop above for you, over a held-out question set, with a
+judge model scoring both answers blind:
+
+```bash
+export ANTHROPIC_API_KEY=sk-...
+pip install anthropic
+python -m eval.abtest --runs 3        # or: python brain.py eval --runs 3
+python -m eval.abtest --dry-run       # print the prompts, make no API calls
+```
+
+It asks each brain-dependent question in `eval/questions.json` twice — with and
+without the brain in the system prompt — then a judge scores both 0-30 on
+accuracy / specificity / usefulness and reports the mean delta + 95% CI. Defaults
+to Haiku for the answers and Sonnet for the judge; override with
+`ABTEST_ANSWER_MODEL` / `ABTEST_JUDGE_MODEL`. Point it at your real brain with
+`--brain ./WORKSPACE_BRAIN.md`. See the
+[main README](../README.md#the-eval-harness--does-the-brain-actually-help) for
+example output and cost.
