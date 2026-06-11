@@ -46,7 +46,9 @@ jobs:
             .claude/commands/loop-run.md \
             .claude/commands/loop-tune.md \
             .claude/commands/loop.md \
+            .claude/commands/loop-suggest.md \
             .claude/scripts/brain_lint.py \
+            .claude/scripts/loops_lint.py \
             WORKSPACE_BRAIN.md; do
             test -f "/tmp/target/$f" || { echo "missing: $f"; exit 1; }
           done
@@ -151,6 +153,58 @@ jobs:
           out2=$(echo '{"session_id":"spin-test"}' | BRAIN_LOOP_MAX_PER_LOOP=5 BRAIN_LOOP_MAX_PER_SESSION=5 python .claude/hooks/brain_loop_autopilot.py)
           test -z "$out2" || { echo "anti-spin should allow stop, got: $out2"; exit 1; }
           rm -f WORKSPACE_LOOPS.md /tmp/brain_loop_autopilot_*.json
+
+      - name: Verify loops_lint scores a well-formed loops file 100/100
+        shell: bash
+        run: |
+          cd /tmp/target
+          cat > WORKSPACE_LOOPS.md <<EOF
+          # WORKSPACE LOOPS
+
+          ## LOOP: well-formed
+          - **Goal**: smoke-test the linter
+          - **Trigger**: every 7d
+          - **Next run**: $(python -c "from datetime import datetime, timedelta; print((datetime.now()+timedelta(days=7)).strftime('%Y-%m-%d'))")
+          - **Observation**: \`echo ok\`
+          - **Criterion**: exit_code == 0
+          - **Brain context**: DECISIONS LOG
+          - **First-failure action**: open a TODO
+          - **Status**: active
+
+          ### History
+          - 2026-06-01 SUCCESS smoke=ok → noted
+
+          ### Tuning Log
+          - 2026-06-01 Loop created via /loop-init. Reason: smoke-test the linter.
+          EOF
+          out=$(python .claude/scripts/loops_lint.py WORKSPACE_LOOPS.md)
+          echo "$out"
+          echo "$out" | grep -q "Score: 100/100" || { echo "well-formed file should score 100/100"; exit 1; }
+          rm -f WORKSPACE_LOOPS.md
+
+      - name: Verify loops_lint flags missing Reason in Tuning Log
+        shell: bash
+        run: |
+          cd /tmp/target
+          cat > WORKSPACE_LOOPS.md <<'EOF'
+          # WORKSPACE LOOPS
+
+          ## LOOP: no-reason
+          - **Goal**: smoke-test rationale check
+          - **Trigger**: manual
+          - **Next run**: manual
+          - **Observation**: `echo ok`
+          - **Criterion**: exit_code == 0
+          - **Status**: active
+
+          ### History
+
+          ### Tuning Log
+          - 2026-06-01 Created the loop with no rationale.
+          EOF
+          out=$(python .claude/scripts/loops_lint.py WORKSPACE_LOOPS.md)
+          echo "$out" | grep -q "Tuning entry missing 'Reason:'" || { echo "lint should flag missing Reason:; got: $out"; exit 1; }
+          rm -f WORKSPACE_LOOPS.md
 
       - name: Verify BRAIN_LOOPS_OFF kill switch silences autopilot
         shell: bash

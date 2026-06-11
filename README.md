@@ -168,6 +168,7 @@ If your brain grows past 16 KB, the linter warns. Past 32 KB, injection is trunc
 | **`/loop-run <slug>`** | Runs one loop iteration — executes the observation, evaluates the criterion, appends to append-only History, escalates a 3+ failure streak to `OPEN QUESTIONS`. |
 | **`/loop-tune <slug>`** | Reasons over ≥3 prior runs + brain context, proposes a one-field refinement to the loop's spec with `Reason:` citing the runs, mirrors approved tunings into `DECISIONS LOG`. |
 | **`/loop`** | Read-only status: due now / due soon / stable / failing / paused-retired. See [`examples/loops-walkthrough.md`](examples/loops-walkthrough.md). |
+| **`/loop-suggest`** | Reads the brain (and research sidecar if present), extracts loop-worthy signal (cadence-flavored decisions, watch-flavored open questions, regression patterns, `[pattern]` insights with implications), and proposes 1-3 pre-filled loops you can accept or reject. Closes the "loops build by themselves" gap — you don't have to invent loops from scratch. |
 
 ---
 

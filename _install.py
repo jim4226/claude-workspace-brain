@@ -46,7 +46,9 @@ FILES = [
     (".claude/commands/loop-run.md", ".claude/commands/loop-run.md"),
     (".claude/commands/loop-tune.md", ".claude/commands/loop-tune.md"),
     (".claude/commands/loop.md", ".claude/commands/loop.md"),
+    (".claude/commands/loop-suggest.md", ".claude/commands/loop-suggest.md"),
     (".claude/scripts/brain_lint.py", ".claude/scripts/brain_lint.py"),
+    (".claude/scripts/loops_lint.py", ".claude/scripts/loops_lint.py"),
     ("WORKSPACE_BRAIN.md", "WORKSPACE_BRAIN.md"),
 ]
 

@@ -38,6 +38,23 @@ All notable changes to this project will be documented here. Format loosely foll
 - **`_install.py --with-loop-autopilot`** flag wires the autopilot
   Stop hook (separate from `--with-loop-runner` — pick one trigger
   mode based on how autonomous you want loops to be).
+- **`/loop-suggest` slash command** — reads
+  `WORKSPACE_BRAIN.md` (+ `WORKSPACE_RESEARCH.md` if present),
+  extracts loop-worthy signal across 7 brain sections and 2 research
+  patterns, scores candidates 1-9 on signal / falsifiability / brain
+  coupling, drops anything below 6, ranks descending, and proposes
+  the top 1-3 with pre-filled `Goal` / `Observation` / `Criterion` /
+  `Trigger` (conservative default `manual`) / `Brain context` /
+  `First-failure action`. Each proposal includes a "Why this loop?"
+  block citing at least two brain quotes. Read-mostly: writes nothing
+  unless the user approves a `/loop-init` invocation. Closes the
+  "loops build by themselves" gap — the brain already contains the
+  signal, you just confirm.
+- **`template/.claude/scripts/loops_lint.py`** — static quality
+  scorer for `WORKSPACE_LOOPS.md` mirroring `brain_lint.py`. Six axes,
+  100 points: Required fields (25), History hygiene (15), Tuning
+  rationale (20), Trigger sanity (15), Stale Next-run (15), Status
+  consistency (10). Stdlib only, always exits 0, no third-party deps.
 - **`brain_session_start.py`** now emits a one-line loops breadcrumb
   noting total loop count and due count. Honors `LOOPS_FILE` env var.
 - **`_install.py --with-loop-runner`** flag wires the loop runner Stop
