@@ -35,8 +35,16 @@ FILES = [
     (".claude/hooks/brain_session_start.py", ".claude/hooks/brain_session_start.py"),
     (".claude/hooks/brain_pre_compact.py", ".claude/hooks/brain_pre_compact.py"),
     (".claude/hooks/brain_stop.py", ".claude/hooks/brain_stop.py"),
+    (".claude/hooks/brain_loop_runner.py", ".claude/hooks/brain_loop_runner.py"),
     (".claude/commands/brain.md", ".claude/commands/brain.md"),
     (".claude/commands/brain-grade.md", ".claude/commands/brain-grade.md"),
+    (".claude/commands/brain-init.md", ".claude/commands/brain-init.md"),
+    (".claude/commands/brain-archive.md", ".claude/commands/brain-archive.md"),
+    (".claude/commands/user-research.md", ".claude/commands/user-research.md"),
+    (".claude/commands/loop-init.md", ".claude/commands/loop-init.md"),
+    (".claude/commands/loop-run.md", ".claude/commands/loop-run.md"),
+    (".claude/commands/loop-tune.md", ".claude/commands/loop-tune.md"),
+    (".claude/commands/loop.md", ".claude/commands/loop.md"),
     (".claude/scripts/brain_lint.py", ".claude/scripts/brain_lint.py"),
     ("WORKSPACE_BRAIN.md", "WORKSPACE_BRAIN.md"),
 ]
@@ -48,6 +56,17 @@ STOP_HOOK_BLOCK = {
             "type": "command",
             "command": "python .claude/hooks/brain_stop.py",
             "timeout": 10,
+        }
+    ],
+}
+
+LOOP_RUNNER_HOOK_BLOCK = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": "python .claude/hooks/brain_loop_runner.py",
+            "timeout": 5,
         }
     ],
 }
@@ -74,11 +93,13 @@ def copy_with_check(src: Path, dst: Path, force: bool, yes: bool) -> str:
     return "created"
 
 
-def merge_settings(target: Path, force: bool, yes: bool, with_stop: bool) -> str:
+def merge_settings(target: Path, force: bool, yes: bool, with_stop: bool, with_loop_runner: bool) -> str:
     """Merge our hook entries into the target's settings.json (or create fresh)."""
     template_settings = json.loads((TEMPLATE_DIR / ".claude/settings.json").read_text(encoding="utf-8"))
     if with_stop:
         template_settings.setdefault("hooks", {}).setdefault("Stop", []).append(STOP_HOOK_BLOCK)
+    if with_loop_runner:
+        template_settings.setdefault("hooks", {}).setdefault("Stop", []).append(LOOP_RUNNER_HOOK_BLOCK)
 
     target_settings_path = target / ".claude/settings.json"
     if not target_settings_path.exists():
@@ -121,6 +142,8 @@ def main() -> int:
     p.add_argument("--force", action="store_true", help="Overwrite existing files without prompting")
     p.add_argument("--yes", action="store_true", help="Assume yes to all prompts")
     p.add_argument("--with-stop-hook", action="store_true", help="Also enable the opt-in Stop hook")
+    p.add_argument("--with-loop-runner", action="store_true",
+                   help="Also enable the opt-in Stop hook that surfaces due self-improving loops")
     args = p.parse_args()
 
     target = Path(args.target).resolve()
@@ -129,10 +152,11 @@ def main() -> int:
         return 1
 
     print(f"claude-workspace-brain installer")
-    print(f"  target:         {target}")
-    print(f"  source:         {TEMPLATE_DIR}")
-    print(f"  force:          {args.force}")
-    print(f"  with-stop-hook: {args.with_stop_hook}")
+    print(f"  target:            {target}")
+    print(f"  source:            {TEMPLATE_DIR}")
+    print(f"  force:             {args.force}")
+    print(f"  with-stop-hook:    {args.with_stop_hook}")
+    print(f"  with-loop-runner:  {args.with_loop_runner}")
     print("")
 
     if not args.yes and not args.force:
@@ -143,7 +167,7 @@ def main() -> int:
     results: dict[str, list[str]] = {"created": [], "overwritten": [], "skipped": [], "merged": [], "already-present": []}
 
     # Settings handled specially (merge instead of copy)
-    status = merge_settings(target, args.force, args.yes, args.with_stop_hook)
+    status = merge_settings(target, args.force, args.yes, args.with_stop_hook, args.with_loop_runner)
     results.setdefault(status, []).append(".claude/settings.json")
 
     for src_rel, dst_rel in FILES:

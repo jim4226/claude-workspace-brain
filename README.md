@@ -164,6 +164,10 @@ If your brain grows past 16 KB, the linter warns. Past 32 KB, injection is trunc
 | **`/brain-grade`** | AI-graded quality review on 5 axes + concrete edit suggestions. Waits for approval. |
 | **`/brain-archive`** | Migrates completed threads + sessions >10 entries old to `WORKSPACE_BRAIN_ARCHIVE.md`. |
 | **`/user-research`** | Captures atomic user-research insights into a sidecar `WORKSPACE_RESEARCH.md`, with pseudonymous provenance, `[pattern]`-gated cross-references into the brain, and a `consult` mode for read-only queries. See [`examples/user-research-walkthrough.md`](examples/user-research-walkthrough.md). |
+| **`/loop-init`** | Factory for self-improving loops: interactively builds a falsifiable spec (goal · observation · criterion · brain context) and writes it to `WORKSPACE_LOOPS.md`. |
+| **`/loop-run <slug>`** | Runs one loop iteration — executes the observation, evaluates the criterion, appends to append-only History, escalates a 3+ failure streak to `OPEN QUESTIONS`. |
+| **`/loop-tune <slug>`** | Reasons over ≥3 prior runs + brain context, proposes a one-field refinement to the loop's spec with `Reason:` citing the runs, mirrors approved tunings into `DECISIONS LOG`. |
+| **`/loop`** | Read-only status: due now / due soon / stable / failing / paused-retired. See [`examples/loops-walkthrough.md`](examples/loops-walkthrough.md). |
 
 ---
 

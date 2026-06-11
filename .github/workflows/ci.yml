@@ -27,7 +27,7 @@ jobs:
           mkdir -p /tmp/target
           python _install.py --target /tmp/target --yes
 
-      - name: Verify all 8 files landed
+      - name: Verify all installer files landed
         shell: bash
         run: |
           for f in \
@@ -35,8 +35,16 @@ jobs:
             .claude/hooks/brain_session_start.py \
             .claude/hooks/brain_pre_compact.py \
             .claude/hooks/brain_stop.py \
+            .claude/hooks/brain_loop_runner.py \
             .claude/commands/brain.md \
             .claude/commands/brain-grade.md \
+            .claude/commands/brain-init.md \
+            .claude/commands/brain-archive.md \
+            .claude/commands/user-research.md \
+            .claude/commands/loop-init.md \
+            .claude/commands/loop-run.md \
+            .claude/commands/loop-tune.md \
+            .claude/commands/loop.md \
             .claude/scripts/brain_lint.py \
             WORKSPACE_BRAIN.md; do
             test -f "/tmp/target/$f" || { echo "missing: $f"; exit 1; }
@@ -61,6 +69,35 @@ jobs:
           cd /tmp/target
           out=$(echo '{}' | python .claude/hooks/brain_pre_compact.py)
           echo "$out" | grep -q "PRE-COMPACTION DIRECTIVE" || { echo "hook output missing directive"; exit 1; }
+
+      - name: Verify loop runner exits cleanly when no loops file present
+        shell: bash
+        run: |
+          cd /tmp/target
+          python .claude/hooks/brain_loop_runner.py
+          # Should exit 0 with no output when WORKSPACE_LOOPS.md doesn't exist
+
+      - name: Verify loop runner emits directive when a loops file with due loop exists
+        shell: bash
+        run: |
+          cd /tmp/target
+          cat > WORKSPACE_LOOPS.md <<'EOF'
+          # WORKSPACE LOOPS
+          ## LOOP: test-loop
+          - **Goal**: smoke-test the runner
+          - **Trigger**: every 1d
+          - **Next run**: 2020-01-01
+          - **Observation**: `echo ok`
+          - **Criterion**: exit_code == 0
+          - **Brain context**: DECISIONS LOG
+          - **Status**: active
+          ### History
+          ### Tuning Log
+          EOF
+          out=$(python .claude/hooks/brain_loop_runner.py)
+          echo "$out" | grep -q "LOOPS DUE" || { echo "loop runner missed due loop"; exit 1; }
+          echo "$out" | grep -q "test-loop" || { echo "loop runner missing slug"; exit 1; }
+          rm -f WORKSPACE_LOOPS.md .claude/.loops-runner-state
 
       - name: Re-run installer (should be idempotent)
         shell: bash

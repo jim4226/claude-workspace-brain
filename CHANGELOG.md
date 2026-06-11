@@ -7,6 +7,33 @@ All notable changes to this project will be documented here. Format loosely foll
 ## [Unreleased]
 
 ### Added
+- **Self-improving loops** backed by the brain. A loop *defines itself*
+  via `/loop-init` (interactive factory that requires a falsifiable
+  criterion), *runs itself* via `/loop-run` (append-only History with
+  refusal-to-fabricate guarantees), and *improves itself* via
+  `/loop-tune` (one-field refinement per run, requires ≥3 prior runs
+  for evidence, mirrors approved tunings into `DECISIONS LOG` with
+  `Reason:` so the brain's lint rationale axis catches lazy tuning).
+  `/loop` gives read-only status (due now / due soon / stable /
+  failing / paused-retired).
+- **`WORKSPACE_LOOPS.md`** sidecar (mirrors `WORKSPACE_RESEARCH.md`)
+  holding loop specs, append-only History, and append-only Tuning Log.
+  NOT auto-injected. Each loop's `Trigger` and `Next run` are honored
+  by an opt-in Stop hook.
+- **`brain_loop_runner.py`** opt-in Stop hook that surfaces *due*
+  loops with a terse directive (one line per due loop). De-duplicates
+  within a 6h quiet window (`LOOPS_QUIET_HOURS` env var) so it won't
+  spam every Stop event. Refuses to run observation commands itself —
+  only the slash command does, with user awareness.
+- **`brain_session_start.py`** now emits a one-line loops breadcrumb
+  noting total loop count and due count. Honors `LOOPS_FILE` env var.
+- **`_install.py --with-loop-runner`** flag wires the loop runner Stop
+  hook (mirrors `--with-stop-hook` shape).
+- **Installer now ships all command files** — previously `/brain-init`
+  and `/brain-archive` weren't being copied; they are now, alongside
+  the new `/user-research` and `/loop-*` commands.
+- **CI workflow** verifies the loop runner exits cleanly with no loops
+  file present and emits a directive when a due loop is defined.
 - **`/user-research` slash command** — captures atomic user-research
   insights into a sidecar `WORKSPACE_RESEARCH.md` (kept out of the
   brain's size budget). Provenance-checked: pseudonyms only, never real
