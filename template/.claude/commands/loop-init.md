@@ -164,10 +164,20 @@ WORKSPACE_LOOPS.md <-> <topic>.`
 
 - See `examples/loops-walkthrough.md` for a worked example: a
   brain-health loop that fails, self-tunes, then succeeds.
-- The loop runner (`brain_loop_runner.py`) is opt-in. Enable it via
-  `python _install.py --target . --yes --with-loop-runner` (or add the
-  Stop block manually). Loops can be run with `/loop-run` even without
-  the runner.
+- **Three trigger modes**, increasing in autonomy:
+  - **`brain_loop_runner.py`** (opt-in, `--with-loop-runner`) —
+    *surfaces* due loops with a one-line directive each Stop. You
+    still manually run `/loop-run <slug>`. Best for "I want a nudge".
+  - **`brain_loop_autopilot.py`** (opt-in, `--with-loop-autopilot`) —
+    *drives* due loops by blocking the stop and asking Claude to
+    invoke `/loop-run <slug>`. Budget-bounded (default: max 2 blocks
+    per session, max 1 per loop per session); anti-spin guard (no
+    block if last block produced no new History entry); kill switch
+    `BRAIN_LOOPS_OFF=1`. Best for "I want it just to happen".
+  - **Neither** (default) — loops only run when you ask. Best for
+    first-time users.
+- Loops can be run with `/loop-run` regardless of trigger mode. The
+  hooks only control when the *next* run is prompted.
 - Loops are **not** the right tool for one-shot tasks. If you only ever
   need the answer once, just ask Claude directly.
 - A loop is itself a hypothesis. Expect to tune it. Loops that never

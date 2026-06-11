@@ -287,6 +287,59 @@ keeps the rationale for every tuning. Six months from now, when a new
 maintainer wonders "why is the lint threshold 85 and not 90?", the
 record is right there.
 
+## Autopilot mode — making the loop run itself
+
+The walkthrough above had you manually invoke `/loop-run` each week.
+That's the conservative default. If you'd rather the loop **just
+happen**, install with `--with-loop-autopilot`:
+
+```bash
+python _install.py --target . --yes --with-loop-autopilot
+```
+
+Now what happens on a Stop event (i.e. when Claude finishes a reply)
+with a due loop and no recent autopilot activity:
+
+```
+> "thanks, that's all for today"
+[Claude's reply ends]
+
+[brain_loop_autopilot.py fires]
+[autopilot sees brain-grade-weekly is due, history=4, last block in this
+ session was at history=4 too? No — fresh session, no prior block]
+[emits {"decision": "block", "reason": "...Loop autopilot-test is due..."}]
+
+[Claude Code blocks the stop, hands the directive to Claude]
+[Claude: "Right — autopilot is driving the brain-grade-weekly loop.
+          Running /loop-run brain-grade-weekly now..."]
+[Score: 89. Criterion 85 met. History entry appended. Next run += 7d.]
+
+[Claude tries to stop again]
+[autopilot fires; history is now 5 (grew by 1); per-loop budget is 1;
+ this session already had 1 block for this loop → allow stop]
+[Session ends naturally]
+```
+
+Four guards keep this from running away:
+
+| Guard | Default | Purpose |
+|-------|---------|---------|
+| Kill switch | `BRAIN_LOOPS_OFF=1` | Master off — set it in your shell to silence all autopilot for the session |
+| Session-wide block cap | 2 | Total autopilot blocks per session — even across multiple loops |
+| Per-loop session cap | 1 | One iteration of any given loop per session |
+| Anti-spin | always on | If History didn't grow between blocks for the same loop in the same session, allow the stop — prevents infinite loops when /loop-run is broken |
+
+The anti-spin guard is the important one. If the observation command
+exits non-zero, or Claude SKIPs the run, or the History parser breaks,
+the autopilot detects "no progress" on the next Stop and gracefully
+hands the session back. You never get a runaway loop — the worst case
+is one wasted Stop block.
+
+The autopilot is **opt-in for a reason**: it changes how a session
+ends. First-time users should run `--with-loop-runner` (which only
+*surfaces* due loops) and graduate to `--with-loop-autopilot` once
+they trust their loops' observations.
+
 ## What did *not* happen (and why)
 
 - **The Day-7 failure was not silently retried.** The first-failure

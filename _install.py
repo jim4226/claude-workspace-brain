@@ -36,6 +36,7 @@ FILES = [
     (".claude/hooks/brain_pre_compact.py", ".claude/hooks/brain_pre_compact.py"),
     (".claude/hooks/brain_stop.py", ".claude/hooks/brain_stop.py"),
     (".claude/hooks/brain_loop_runner.py", ".claude/hooks/brain_loop_runner.py"),
+    (".claude/hooks/brain_loop_autopilot.py", ".claude/hooks/brain_loop_autopilot.py"),
     (".claude/commands/brain.md", ".claude/commands/brain.md"),
     (".claude/commands/brain-grade.md", ".claude/commands/brain-grade.md"),
     (".claude/commands/brain-init.md", ".claude/commands/brain-init.md"),
@@ -71,6 +72,17 @@ LOOP_RUNNER_HOOK_BLOCK = {
     ],
 }
 
+LOOP_AUTOPILOT_HOOK_BLOCK = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": "python .claude/hooks/brain_loop_autopilot.py",
+            "timeout": 5,
+        }
+    ],
+}
+
 
 def confirm(prompt: str, default_yes: bool) -> bool:
     if default_yes:
@@ -93,13 +105,16 @@ def copy_with_check(src: Path, dst: Path, force: bool, yes: bool) -> str:
     return "created"
 
 
-def merge_settings(target: Path, force: bool, yes: bool, with_stop: bool, with_loop_runner: bool) -> str:
+def merge_settings(target: Path, force: bool, yes: bool, with_stop: bool,
+                   with_loop_runner: bool, with_loop_autopilot: bool) -> str:
     """Merge our hook entries into the target's settings.json (or create fresh)."""
     template_settings = json.loads((TEMPLATE_DIR / ".claude/settings.json").read_text(encoding="utf-8"))
     if with_stop:
         template_settings.setdefault("hooks", {}).setdefault("Stop", []).append(STOP_HOOK_BLOCK)
     if with_loop_runner:
         template_settings.setdefault("hooks", {}).setdefault("Stop", []).append(LOOP_RUNNER_HOOK_BLOCK)
+    if with_loop_autopilot:
+        template_settings.setdefault("hooks", {}).setdefault("Stop", []).append(LOOP_AUTOPILOT_HOOK_BLOCK)
 
     target_settings_path = target / ".claude/settings.json"
     if not target_settings_path.exists():
@@ -144,6 +159,9 @@ def main() -> int:
     p.add_argument("--with-stop-hook", action="store_true", help="Also enable the opt-in Stop hook")
     p.add_argument("--with-loop-runner", action="store_true",
                    help="Also enable the opt-in Stop hook that surfaces due self-improving loops")
+    p.add_argument("--with-loop-autopilot", action="store_true",
+                   help="Also enable the opt-in Stop hook that DRIVES due loops by blocking the stop "
+                        "(implies a budget-bounded autonomous loop. See brain_loop_autopilot.py docs.)")
     args = p.parse_args()
 
     target = Path(args.target).resolve()
@@ -152,11 +170,12 @@ def main() -> int:
         return 1
 
     print(f"claude-workspace-brain installer")
-    print(f"  target:            {target}")
-    print(f"  source:            {TEMPLATE_DIR}")
-    print(f"  force:             {args.force}")
-    print(f"  with-stop-hook:    {args.with_stop_hook}")
-    print(f"  with-loop-runner:  {args.with_loop_runner}")
+    print(f"  target:               {target}")
+    print(f"  source:               {TEMPLATE_DIR}")
+    print(f"  force:                {args.force}")
+    print(f"  with-stop-hook:       {args.with_stop_hook}")
+    print(f"  with-loop-runner:     {args.with_loop_runner}")
+    print(f"  with-loop-autopilot:  {args.with_loop_autopilot}")
     print("")
 
     if not args.yes and not args.force:
@@ -167,7 +186,8 @@ def main() -> int:
     results: dict[str, list[str]] = {"created": [], "overwritten": [], "skipped": [], "merged": [], "already-present": []}
 
     # Settings handled specially (merge instead of copy)
-    status = merge_settings(target, args.force, args.yes, args.with_stop_hook, args.with_loop_runner)
+    status = merge_settings(target, args.force, args.yes, args.with_stop_hook,
+                            args.with_loop_runner, args.with_loop_autopilot)
     results.setdefault(status, []).append(".claude/settings.json")
 
     for src_rel, dst_rel in FILES:

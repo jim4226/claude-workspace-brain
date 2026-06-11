@@ -25,6 +25,19 @@ All notable changes to this project will be documented here. Format loosely foll
   within a 6h quiet window (`LOOPS_QUIET_HOURS` env var) so it won't
   spam every Stop event. Refuses to run observation commands itself —
   only the slash command does, with user awareness.
+- **`brain_loop_autopilot.py`** opt-in Stop hook that *drives* due
+  loops by emitting a `{"decision": "block", "reason": …}` JSON
+  response — Claude Code's Stop-hook protocol blocks the stop and
+  hands Claude the directive to `/loop-run <slug>`. Bounded by four
+  guards: (1) `BRAIN_LOOPS_OFF=1` kill switch, (2) session-wide block
+  cap (`BRAIN_LOOP_MAX_PER_SESSION`, default 2), (3) per-loop session
+  cap (`BRAIN_LOOP_MAX_PER_LOOP`, default 1), (4) anti-spin (if last
+  block produced no new History entry, allow the stop — cannot be
+  disabled). State lives in tempdir keyed by SHA-1(cwd), 7-day TTL,
+  never written into the repo. Any exception allows the stop.
+- **`_install.py --with-loop-autopilot`** flag wires the autopilot
+  Stop hook (separate from `--with-loop-runner` — pick one trigger
+  mode based on how autonomous you want loops to be).
 - **`brain_session_start.py`** now emits a one-line loops breadcrumb
   noting total loop count and due count. Honors `LOOPS_FILE` env var.
 - **`_install.py --with-loop-runner`** flag wires the loop runner Stop

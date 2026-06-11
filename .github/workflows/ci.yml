@@ -36,6 +36,7 @@ jobs:
             .claude/hooks/brain_pre_compact.py \
             .claude/hooks/brain_stop.py \
             .claude/hooks/brain_loop_runner.py \
+            .claude/hooks/brain_loop_autopilot.py \
             .claude/commands/brain.md \
             .claude/commands/brain-grade.md \
             .claude/commands/brain-init.md \
@@ -98,6 +99,79 @@ jobs:
           echo "$out" | grep -q "LOOPS DUE" || { echo "loop runner missed due loop"; exit 1; }
           echo "$out" | grep -q "test-loop" || { echo "loop runner missing slug"; exit 1; }
           rm -f WORKSPACE_LOOPS.md .claude/.loops-runner-state
+
+      - name: Verify autopilot exits silently when no loops file present
+        shell: bash
+        run: |
+          cd /tmp/target
+          out=$(echo '{"session_id":"ci-test"}' | python .claude/hooks/brain_loop_autopilot.py)
+          test -z "$out" || { echo "autopilot should be silent with no loops file, got: $out"; exit 1; }
+
+      - name: Verify autopilot emits block-decision JSON when a due loop exists
+        shell: bash
+        run: |
+          cd /tmp/target
+          cat > WORKSPACE_LOOPS.md <<'EOF'
+          # WORKSPACE LOOPS
+          ## LOOP: autopilot-test
+          - **Goal**: smoke-test the autopilot
+          - **Trigger**: every 1d
+          - **Next run**: 2020-01-01
+          - **Observation**: `echo ok`
+          - **Criterion**: exit_code == 0
+          - **Brain context**: DECISIONS LOG
+          - **Status**: active
+          ### History
+          ### Tuning Log
+          EOF
+          out=$(echo '{"session_id":"ci-test"}' | python .claude/hooks/brain_loop_autopilot.py)
+          echo "$out" | python -c "import json,sys; d=json.loads(sys.stdin.read()); assert d['decision']=='block', d; assert 'autopilot-test' in d['reason'], d" \
+            || { echo "autopilot block decision malformed: $out"; exit 1; }
+
+      - name: Verify autopilot per-loop budget closes after one block
+        shell: bash
+        run: |
+          cd /tmp/target
+          # Default MAX_PER_LOOP=1, so call 2 in the same session is silent
+          # whether anti-spin fires or budget fires.
+          out=$(echo '{"session_id":"ci-test"}' | python .claude/hooks/brain_loop_autopilot.py)
+          test -z "$out" || { echo "autopilot should respect per-loop budget, got: $out"; exit 1; }
+
+      - name: Verify autopilot anti-spin fires when budget allows more runs
+        shell: bash
+        run: |
+          cd /tmp/target
+          # Wipe state so this is a fresh session, raise per-loop budget so
+          # anti-spin is the only thing that can stop us.
+          rm -f /tmp/brain_loop_autopilot_*.json
+          # Call 1: blocks, sees history=0.
+          out1=$(echo '{"session_id":"spin-test"}' | BRAIN_LOOP_MAX_PER_LOOP=5 BRAIN_LOOP_MAX_PER_SESSION=5 python .claude/hooks/brain_loop_autopilot.py)
+          echo "$out1" | grep -q '"decision": "block"' || { echo "call 1 should block, got: $out1"; exit 1; }
+          # Call 2: history STILL 0 — anti-spin must allow the stop.
+          out2=$(echo '{"session_id":"spin-test"}' | BRAIN_LOOP_MAX_PER_LOOP=5 BRAIN_LOOP_MAX_PER_SESSION=5 python .claude/hooks/brain_loop_autopilot.py)
+          test -z "$out2" || { echo "anti-spin should allow stop, got: $out2"; exit 1; }
+          rm -f WORKSPACE_LOOPS.md /tmp/brain_loop_autopilot_*.json
+
+      - name: Verify BRAIN_LOOPS_OFF kill switch silences autopilot
+        shell: bash
+        run: |
+          cd /tmp/target
+          cat > WORKSPACE_LOOPS.md <<'EOF'
+          # WORKSPACE LOOPS
+          ## LOOP: killswitch-test
+          - **Goal**: kill-switch check
+          - **Trigger**: every 1d
+          - **Next run**: 2020-01-01
+          - **Observation**: `echo ok`
+          - **Criterion**: exit_code == 0
+          - **Brain context**: DECISIONS LOG
+          - **Status**: active
+          ### History
+          ### Tuning Log
+          EOF
+          out=$(BRAIN_LOOPS_OFF=1 sh -c "echo '{\"session_id\":\"ks\"}' | python .claude/hooks/brain_loop_autopilot.py")
+          test -z "$out" || { echo "kill switch should silence autopilot, got: $out"; exit 1; }
+          rm -f WORKSPACE_LOOPS.md
 
       - name: Re-run installer (should be idempotent)
         shell: bash
