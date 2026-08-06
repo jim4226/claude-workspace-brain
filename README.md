@@ -314,7 +314,7 @@ What you keep:
 | Project | Storage | Setup | External deps | Has built-in eval? |
 |---------|---------|-------|---------------|---------------------|
 | **claude-workspace-brain** *(this)* | One markdown file | One curl\|bash | None | **Yes** |
-| [Cipher](https://github.com/cipher-shell/cipher) | Vector DB | Run the Cipher server | Database layer | No |
+| [ByteRover CLI (formerly Cipher)](https://github.com/campfirein/byterover-cli) | Context tree | Install and run `brv` | ByteRover CLI | No |
 | [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler) | Knowledge articles, multiple files | Configure Agent SDK | Claude Agent SDK | No |
 | [mem0.ai integration](https://mem0.ai/blog/claude-code-memory) | Mem0 vector DB | Account + API key | Mem0 service | No |
 | [MemU](https://memu.pro) | MemU cloud | Account + API key | MemU service | No |
